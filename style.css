@@ -554,7 +554,7 @@ body {
     color: #4285f4;
 }
 
-/* .kakao-btn {
+.kakao-btn {
     background: #fee500;
     border-color: #fee500;
     color: #333;
@@ -563,7 +563,7 @@ body {
 .kakao-btn:hover {
     background: #fdd800;
     border-color: #fdd800;
-} */
+}
 
 .signup-link {
     text-align: center;

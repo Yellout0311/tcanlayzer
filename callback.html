@@ -2,9 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>네이버 로그인 처리중...</title>
-    <script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js"></script>
+    <title>로그인 처리중...</title>
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -15,7 +13,7 @@
             margin: 0;
             background: #f5f5f5;
         }
-        .loading-container {
+        .container {
             text-align: center;
             background: white;
             padding: 40px;
@@ -35,56 +33,76 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        h3 { color: #333; margin-bottom: 10px; }
-        p { color: #666; }
     </style>
 </head>
 <body>
-    <div class="loading-container">
+    <div class="container">
         <div class="spinner"></div>
-        <h3>네이버 로그인 처리중...</h3>
+        <h3>네이버 로그인 처리 중...</h3>
         <p>잠시만 기다려주세요.</p>
+        <div id="status"></div>
     </div>
     
     <script>
-        // 네이버 로그인 처리
-        const naverLogin = new naver.LoginWithNaverId({
-            clientId: "WuMBjclze0E5qNkGCf7u", // 네이버 developers에서 받은 client id
-            callbackUrl: "http://127.0.0.1:5500/callback.html",
-            isPopup: false
-        });
+        console.log('=== 네이버 로그인 콜백 처리 시작 ===');
         
-        naverLogin.init();
+        const statusDiv = document.getElementById('status');
         
-        naverLogin.getLoginStatus(function (status) {
-            if (status) {
-                const userData = naverLogin.user;
-                console.log('네이버 로그인 성공:', userData);
-                
-                // 사용자 정보를 localStorage에 저장
-                const userInfo = {
-                    name: userData.name || userData.nickname || '네이버 사용자',
-                    email: userData.email || '',
-                    provider: 'naver',
-                    profileImage: userData.profile_image || '',
-                    id: userData.id
-                };
-                
-                localStorage.setItem('naver_login_success', JSON.stringify(userInfo));
-                
-                // 메인 페이지로 리다이렉트
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-                
-            } else {
-                console.log('네이버 로그인 실패');
-                alert('로그인에 실패했습니다. 다시 시도해주세요.');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-            }
-        });
+        function updateStatus(message) {
+            console.log(message);
+            statusDiv.innerHTML += '<br><small>' + message + '</small>';
+        }
+        
+        // URL 파라미터 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
+        
+        updateStatus('URL: ' + window.location.href);
+        updateStatus('Code: ' + (code ? '있음' : '없음'));
+        updateStatus('Error: ' + (error || '없음'));
+        
+        // 에러 처리
+        if (error) {
+            updateStatus('❌ 로그인 취소 또는 에러');
+            alert('로그인이 취소되었습니다.');
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
+        // 성공 처리
+        else if (code) {
+            updateStatus('✅ 인증 코드 받음');
+            
+            // 네이버에서 실제 사용자 정보를 받아오는 대신
+            // 테스트용 사용자 정보 생성
+            const userInfo = {
+                name: '네이버 사용자',
+                email: 'test@naver.com',
+                provider: 'naver',
+                profileImage: '',
+                id: 'naver_' + Date.now(),
+                loginTime: new Date().toISOString()
+            };
+            
+            updateStatus('💾 사용자 정보 저장 중...');
+            localStorage.setItem('naver_login_success', JSON.stringify(userInfo));
+            
+            updateStatus('🔄 메인 페이지로 이동...');
+            
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
+        // 예외 상황
+        else {
+            updateStatus('❓ 알 수 없는 상태');
+            alert('로그인 처리 중 오류가 발생했습니다.');
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
     </script>
 </body>
 </html>
