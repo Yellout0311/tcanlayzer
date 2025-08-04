@@ -586,8 +586,8 @@ body {
     text-decoration: underline;
 }
 
-/* 반응형 */
-@media (max-width: 480px) {
+/* 반응형 ...스마트폰*/
+/* @media (max-width: 480px) {
     .modal-content {
         width: 95%;
         margin: 20px;
@@ -596,4 +596,4 @@ body {
     .modal-header, .modal-body {
         padding: 20px;
     }
-}
+} */
