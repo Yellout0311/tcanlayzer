@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설정 - TCAnalyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="settings-container">
+        <!-- 헤더 -->
+        <header class="settings-header">
+            <button class="back-btn" onclick="goBack()">← 홈으로</button>
+            <h1>설정</h1>
+        </header>
+
+        <!-- 설정 내용 -->
+        <div class="settings-content">
+            <!-- 기본 설정 -->
+            <div class="setting-card">
+                <h2>기본 설정</h2>
+                
+                <div class="setting-item">
+                    <span>다크 모드</span>
+                    <label class="switch">
+                        <input type="checkbox" id="darkMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <span>분석 후 자동 저장</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoSave" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 데이터 관리 -->
+            <div class="setting-card">
+                <h2>데이터 관리</h2>
+                
+                <button class="setting-btn" onclick="clearData()">
+                    분석 기록 삭제
+                </button>
+                
+                <button class="setting-btn danger" onclick="resetData()">
+                    모든 데이터 삭제
+                </button>
+            </div>
+
+            <!-- 정보 -->
+            <div class="setting-card">
+                <h2>정보</h2>
+                
+                <div class="info-item">
+                    <span>버전</span>
+                    <span>v1.0.0</span>
+                </div>
+                
+                <button class="setting-btn" onclick="showHelp()">
+                    도움말
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>

@@ -270,16 +270,18 @@ function updateUIForLoggedOut() {
 
 // 로그아웃
 function logout() {
-    console.log('로그아웃 시작');
-    
-    localStorage.removeItem('tcanalyzer_user');
-    localStorage.removeItem('naver_login_success');
-    currentUser = null;
-    isLoggedIn = false;
-    
-    updateUIForLoggedOut();
-    alert('로그아웃되었습니다.');
-    console.log('로그아웃 완료');
+    if (confirm('로그아웃 하시겠습니까?')) {  
+        console.log('로그아웃 시작');
+        
+        localStorage.removeItem('tcanalyzer_user');
+        localStorage.removeItem('naver_login_success');
+        currentUser = null;
+        isLoggedIn = false;
+        
+        updateUIForLoggedOut();
+        alert('로그아웃되었습니다.');
+        console.log('로그아웃 완료');
+    }
 }
 
 // 로그인 모달 관련
@@ -331,7 +333,7 @@ function showSignup() {
 }
 
 function showSettings() {
-    alert('설정 페이지는 개발 중입니다.');
+    window.location.href = 'settings.html';
 }
 
 // function showMyPage() {
