@@ -4,17 +4,16 @@ let currentUser = null;
 let sidebarOpen = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('페이지 로드 완료');
+    console.log('메인 페이지 로드 완료');
+    
+    //다크 모드는 darkmode.js에서 자동처리됨.
     
     // 네이버 로그인 콜백 처리
     checkNaverLoginCallback();
-    
     // 로그인 상태 확인
     checkLoginStatus();
-    
     // 네이버 로그인 버튼 설정
     setupNaverLoginButton();
-    
     // 기존 초기화 코드들
     initializeTextarea();
     setupModalEventListeners();
@@ -51,7 +50,11 @@ function updateSidebarAnalysisList() {
     const analysisList = document.getElementById('analysisList');
     if (!analysisList) return;
     
-    const analysisData = [
+    // 저장된 분석 결과들 가져오기
+    const savedAnalyses = JSON.parse(localStorage.getItem('saved_analyses') || '[]');
+    
+    // 기본 데모 데이터와 합치기
+    const demoData = [
         {
             id: 'instagram',
             name: 'Instagram 이용약관',
@@ -59,56 +62,23 @@ function updateSidebarAnalysisList() {
             status: 'warning',
             statusText: '보통 위험',
             icon: 'IG',
-            iconColor: 'linear-gradient(135deg, #e1306c, #fd1d1d)'
+            iconColor: 'linear-gradient(135deg, #e1306c, #fd1d1d)',
+            isDemo: true
         },
-        {
-            id: 'kakao',
-            name: '카카오톡 개인정보처리방침',
-            date: '2024.07.10',
-            status: 'safe',
-            statusText: '안전',
-            icon: 'K',
-            iconColor: '#ffeb00'
-        },
-        {
-            id: 'naver',
-            name: '네이버 서비스 약관',
-            date: '2024.07.08',
-            status: 'safe',
-            statusText: '안전',
-            icon: 'N',
-            iconColor: '#03c75a'
-        },
-        {
-            id: 'youtube',
-            name: 'YouTube 서비스 약관',
-            date: '2024.07.05',
-            status: 'danger',
-            statusText: '위험',
-            icon: 'YT',
-            iconColor: '#ff0000'
-        },
-        {
-            id: 'discord',
-            name: 'Discord 개인정보처리방침',
-            date: '2024.07.03',
-            status: 'warning',
-            statusText: '보통 위험',
-            icon: 'DC',
-            iconColor: '#5865f2'
-        },
-        {
-            id: 'spotify',
-            name: 'Spotify 이용약관',
-            date: '2024.07.01',
-            status: 'safe',
-            statusText: '안전',
-            icon: 'SP',
-            iconColor: '#1db954'
-        }
+        // ... 다른 데모 데이터들
     ];
     
-    analysisList.innerHTML = analysisData.map(item => `
+    const allAnalyses = [...savedAnalyses.map(item => ({
+        ...item,
+        id: item.id,
+        statusText: item.risk === '높음' ? '위험' : item.risk === '보통' ? '보통 위험' : '안전',
+        status: item.risk === '높음' ? 'danger' : item.risk === '보통' ? 'warning' : 'safe',
+        icon: item.name.substring(0, 2),
+        iconColor: '#B2AC88',
+        isDemo: false
+    })), ...demoData];
+    
+    analysisList.innerHTML = allAnalyses.map(item => `
         <div class="analysis-item" onclick="loadAnalysis('${item.id}')">
             <div class="analysis-item-header">
                 <div class="analysis-item-icon" style="background: ${item.iconColor}; color: ${item.iconColor === '#ffeb00' ? '#333' : 'white'};">
@@ -120,10 +90,22 @@ function updateSidebarAnalysisList() {
                 </div>
             </div>
             <span class="analysis-item-status status-${item.status}">${item.statusText}</span>
+            ${!item.isDemo ? `<button class="delete-analysis-btn" onclick="deleteAnalysis(event, '${item.id}')">🗑️</button>` : ''}
         </div>
     `).join('');
 }
 
+// 분석 결과 삭제 함수
+function deleteAnalysis(event, resultId) {
+    event.stopPropagation(); // 클릭 이벤트 전파 방지
+    
+    if (confirm('이 분석 결과를 삭제하시겠습니까?')) {
+        const savedAnalyses = JSON.parse(localStorage.getItem('saved_analyses') || '[]');
+        const filteredAnalyses = savedAnalyses.filter(item => item.id != resultId);
+        localStorage.setItem('saved_analyses', JSON.stringify(filteredAnalyses));
+        updateSidebarAnalysisList();
+    }
+}
 // 분석 결과 로드
 function loadAnalysis(platform) {
     const platformData = {
@@ -328,17 +310,190 @@ function socialLogin(provider) {
     }
 }
 
+// 회원가입 모달 관련 함수들
 function showSignup() {
-    alert('회원가입 페이지는 개발 중입니다.');
+    closeLoginModal(); // 로그인 모달이 열려있다면 닫기
+    const modal = document.getElementById('signupModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        console.log('회원가입 모달 열기');
+    }
+}
+
+function closeSignupModal() {
+    const modal = document.getElementById('signupModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+        console.log('회원가입 모달 닫기');
+        
+        // 폼 초기화
+        const form = modal.querySelector('.signup-form');
+        if (form) {
+            form.reset();
+            updateSignupSubmitButton();
+        }
+    }
+}
+
+function switchToLogin() {
+    closeSignupModal();
+    showLogin();
+}
+
+// 회원가입 처리
+function handleSignup(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const name = document.getElementById('userName').value;
+    
+    // 입력값 검증
+    if (!email || !password || !confirmPassword || !name) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+    
+    // 비밀번호 확인
+    if (password !== confirmPassword) {
+        alert('비밀번호가 일치하지 않습니다.');
+        return;
+    }
+    
+    // 비밀번호 강도 체크
+    if (password.length < 6) {
+        alert('비밀번호는 최소 6자 이상이어야 합니다.');
+        return;
+    }
+    
+    // 약관 동의 확인
+    const agreeTerms = document.getElementById('agreeTerms').checked;
+    const agreePrivacy = document.getElementById('agreePrivacy').checked;
+    
+    if (!agreeTerms || !agreePrivacy) {
+        alert('필수 약관에 동의해주세요.');
+        return;
+    }
+    
+    // 이메일 중복 체크 (간단한 로컬 체크)
+    const existingUsers = JSON.parse(localStorage.getItem('tcanalyzer_users') || '[]');
+    if (existingUsers.some(user => user.email === email)) {
+        alert('이미 가입된 이메일입니다.');
+        return;
+    }
+    
+    // 회원가입 데이터 준비
+    const signupData = {
+        email: email,
+        name: name,
+        signupDate: new Date().toISOString(),
+        agreeMarketing: document.getElementById('agreeMarketing').checked
+    };
+    
+    try {
+        // 새 사용자 추가
+        existingUsers.push(signupData);
+        localStorage.setItem('tcanalyzer_users', JSON.stringify(existingUsers));
+        
+        console.log('회원가입 성공:', signupData);
+        alert(`${name}님, 환영합니다! 🎉\n회원가입이 완료되었습니다.`);
+        
+        // 회원가입 후 자동 로그인
+        handleLoginSuccess({
+            name: name,
+            email: email,
+            provider: 'email'
+        });
+        
+        closeSignupModal();
+        
+    } catch (error) {
+        console.error('회원가입 실패:', error);
+        alert('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+}
+
+// 약관 동의 체크박스 관리 (페이지 로드 시 이벤트 등록)
+document.addEventListener('DOMContentLoaded', function() {
+    // 기존 초기화 코드...
+    
+    setupSignupTermsAgreement();
+});
+
+function setupSignupTermsAgreement() {
+    const agreeAll = document.getElementById('agreeAll');
+    const agreeTerms = document.getElementById('agreeTerms');
+    const agreePrivacy = document.getElementById('agreePrivacy');
+    const agreeMarketing = document.getElementById('agreeMarketing');
+    
+    if (!agreeAll || !agreeTerms || !agreePrivacy || !agreeMarketing) {
+        return;
+    }
+    
+    // 전체 동의 체크박스
+    agreeAll.addEventListener('change', function() {
+        const checked = this.checked;
+        agreeTerms.checked = checked;
+        agreePrivacy.checked = checked;
+        agreeMarketing.checked = checked;
+        updateSignupSubmitButton();
+    });
+    
+    // 개별 체크박스들
+    [agreeTerms, agreePrivacy, agreeMarketing].forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // 전체 동의 체크박스 상태 업데이트
+            agreeAll.checked = agreeTerms.checked && agreePrivacy.checked && agreeMarketing.checked;
+            updateSignupSubmitButton();
+        });
+    });
+}
+
+function updateSignupSubmitButton() {
+    const agreeTerms = document.getElementById('agreeTerms');
+    const agreePrivacy = document.getElementById('agreePrivacy');
+    const submitBtn = document.getElementById('signupSubmitBtn');
+    
+    if (agreeTerms && agreePrivacy && submitBtn) {
+        const requiredChecked = agreeTerms.checked && agreePrivacy.checked;
+        submitBtn.disabled = !requiredChecked;
+    }
+}
+
+// 기존 setupModalEventListeners 함수에 회원가입 모달 이벤트 추가
+function setupModalEventListeners() {
+    // 기존 로그인 모달 코드...
+    
+    // 회원가입 모달 외부 클릭
+    const signupModal = document.getElementById('signupModal');
+    if (signupModal) {
+        signupModal.addEventListener('click', function(e) {
+            if (e.target === signupModal) {
+                closeSignupModal();
+            }
+        });
+    }
+    
+    // ESC 키로 모달 닫기 (기존 함수에 추가)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeLoginModal();
+            closeSignupModal(); // 추가
+            if (sidebarOpen) {
+                toggleSidebar();
+            }
+        }
+    });
 }
 
 function showSettings() {
     window.location.href = 'settings.html';
 }
 
-// function showMyPage() {
-//     alert('마이페이지 기능은 개발 중입니다.');
-// }
+
 
 // 분석 관련 함수들
 function switchTab(clickedTab, tabId) {
@@ -361,7 +516,7 @@ function switchTab(clickedTab, tabId) {
     }
 }
 
-function analyzeTerms() { //텍스트 읽고 분석
+function analyzeTerms() {
     const textInput = document.querySelector('.text-input').value;
     
     if (textInput.trim() === '') {
@@ -369,21 +524,39 @@ function analyzeTerms() { //텍스트 읽고 분석
         return;
     }
     
+    if (!isLoggedIn) {
+        alert('로그인 후 분석 결과를 저장할 수 있습니다.');
+    }
+    
     document.getElementById('resultSection').style.display = 'block';
     document.getElementById('tabContainer').style.display = 'block';
     
+    const analysisResult = {
+        id: Date.now(),
+        name: getTermsName(textInput),
+        date: new Date().toLocaleDateString('ko-KR'),
+        risk: '보통',
+        dangerCount: 3,
+        goodCount: 7,
+        warningCount: 2,
+        content: textInput.substring(0, 100) + '...' // 내용 일부 저장
+    };
+    
     document.getElementById('resultContent').innerHTML = `
         <div class="analysis-result">
-            <h4> AI를 이용한 '${getTermsName(textInput)}' 약관의 분석 결과</h4>
-            <p>이 약관은 <strong>보통</strong> 수준의 위험도를 가지고 있습니다.</p>
+            <div class="result-header">
+                <h4>🔍 AI를 이용한 '${analysisResult.name}' 약관의 분석 결과</h4>
+                ${isLoggedIn ? `<button class="save-result-btn" onclick="saveAnalysisResult('${analysisResult.id}')">💾 저장하기</button>` : ''}
+            </div>
+            <p>이 약관은 <strong>${analysisResult.risk}</strong> 수준의 위험도를 가지고 있습니다.</p>
             
             <div class="risk-summary">
-                <div class="risk-item danger">위험 문장: 3개</div>
-                <div class="risk-item good">좋은 문장: 7개</div>
-                <div class="risk-item warning">유의해야할 문장: 2개</div>
+                <div class="risk-item danger">위험 문장: ${analysisResult.dangerCount}개</div>
+                <div class="risk-item good">좋은 문장: ${analysisResult.goodCount}개</div>
+                <div class="risk-item warning">유의해야할 문장: ${analysisResult.warningCount}개</div>
             </div>
             
-            <h4> AI를 이용한 분석 결과와 요약</h4>
+            <h4>📊 AI를 이용한 분석 결과와 요약</h4>
             <ul>
                 <li>개인정보 수집 범위가 명확하게 명시되어 있음</li>
                 <li>데이터 보관 기간에 대한 설명이 부족함</li>
@@ -394,12 +567,54 @@ function analyzeTerms() { //텍스트 읽고 분석
         </div>
     `;
     
+    // 임시로 현재 분석 결과 저장 (저장 버튼을 위해)
+    window.currentAnalysisResult = analysisResult;
+    
     document.getElementById('resultSection').scrollIntoView({ 
         behavior: 'smooth',
         block: 'start'
     });
 }
 
+// 분석 결과 저장 함수
+function saveAnalysisResult(resultId) {
+    if (!isLoggedIn) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+    
+    const result = window.currentAnalysisResult;
+    if (!result) {
+        alert('저장할 분석 결과가 없습니다.');
+        return;
+    }
+    
+    // 기존 저장된 분석 결과들 가져오기
+    const savedAnalyses = JSON.parse(localStorage.getItem('saved_analyses') || '[]');
+    
+    // 새 분석 결과 추가
+    savedAnalyses.unshift(result); // 최신 것을 맨 앞에
+    
+    // 최대 20개까지만 저장
+    if (savedAnalyses.length > 20) {
+        savedAnalyses.splice(20);
+    }
+    
+    localStorage.setItem('saved_analyses', JSON.stringify(savedAnalyses));
+    
+    // 사이드바 업데이트
+    updateSidebarAnalysisList();
+    
+    alert('분석 결과가 저장되었습니다! 📁');
+    
+    // 저장 버튼 비활성화
+    const saveBtn = document.querySelector('.save-result-btn');
+    if (saveBtn) {
+        saveBtn.innerHTML = '✅ 저장됨';
+        saveBtn.disabled = true;
+        saveBtn.style.background = '#28a745';
+    }
+}
 function getTermsName(text) { //example case
     if (text.toLowerCase().includes('instagram')) return 'Instagram';
     if (text.toLowerCase().includes('google')) return 'Google';

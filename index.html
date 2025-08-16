@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCAnalyzer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>TCAnalyzer - 약관 분석기</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- 네이버 로그인 SDK -->
-    <script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" charset="utf-8"></script>
+    <!-- 다크모드 공통 유틸리티 -->
+    <script src="darkmode.js"></script>
 </head>
 <body>
     <!-- 사이드바 토글 버튼 -->
@@ -116,12 +116,6 @@
                     <span>또는</span>
                 </div>
                 <div class="social-login">
-                    <button class="social-btn google-btn" onclick="socialLogin('google')">
-                        <span>Google로 로그인</span>
-                    </button>
-                    <button class="social-btn kakao-btn" onclick="socialLogin('kakao')">
-                        <span>카카오로 로그인</span>
-                    </button>
                     <button class="social-btn naver-btn" id="naverLoginBtn">
                         <span>네이버로 로그인</span>
                     </button>
@@ -133,6 +127,66 @@
         </div>
     </div>
 
+    <!-- 회원가입 모달 -->
+    <div class="modal-overlay" id="signupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>회원가입</h2>
+                <button class="close-btn" onclick="closeSignupModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="signup-form" onsubmit="handleSignup(event)">
+                    <div class="input-group">
+                        <label for="signupEmail">이메일</label>
+                        <input type="email" id="signupEmail" name="email" required placeholder="example@email.com">
+                    </div>
+                    <div class="input-group">
+                        <label for="signupPassword">비밀번호</label>
+                        <input type="password" id="signupPassword" name="password" required placeholder="비밀번호 (6자 이상)">
+                    </div>
+                    <div class="input-group">
+                        <label for="confirmPassword">비밀번호 확인</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="비밀번호를 다시 입력하세요">
+                    </div>
+                    <div class="input-group">
+                        <label for="userName">이름</label>
+                        <input type="text" id="userName" name="name" required placeholder="실명을 입력하세요">
+                    </div>
+
+                    <!-- 약관 동의 -->
+                    <div class="terms-section">
+                        <h3>이용약관 및 개인정보처리방침</h3>
+                        <div class="terms-agreement">
+                            <label class="agreement-item required">
+                                <input type="checkbox" id="agreeTerms" required>
+                                <span>[필수] 이용약관에 동의합니다</span>
+                            </label>
+                            <label class="agreement-item required">
+                                <input type="checkbox" id="agreePrivacy" required>
+                                <span>[필수] 개인정보 수집 및 이용에 동의합니다</span>
+                            </label>
+                            <label class="agreement-item optional">
+                                <input type="checkbox" id="agreeMarketing">
+                                <span>[선택] 서비스 개선을 위한 익명 통계 수집에 동의합니다</span>
+                            </label>
+                            <label class="agreement-item agreement-all">
+                                <input type="checkbox" id="agreeAll">
+                                <span class="agreement-all-text">위 약관에 모두 동의합니다</span>
+                            </label>
+                        </div>
+                    </div>
+                
+                    <button type="submit" class="signup-btn" id="signupSubmitBtn" disabled>
+                        회원가입
+                    </button>
+                </form>
+
+                <div class="login-link">
+                    <p>이미 계정이 있으신가요? <a href="#" onclick="switchToLogin()">로그인</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
