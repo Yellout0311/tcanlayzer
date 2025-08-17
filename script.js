@@ -524,29 +524,18 @@ function analyzeTerms() {
         return;
     }
     
-    if (!isLoggedIn) {
-        alert('로그인 후 분석 결과를 저장할 수 있습니다.');
-    }
-    
+    // 분석 결과 표시 (로그인 여부 상관없이)
     document.getElementById('resultSection').style.display = 'block';
     document.getElementById('tabContainer').style.display = 'block';
     
-    const analysisResult = {
-        id: Date.now(),
-        name: getTermsName(textInput),
-        date: new Date().toLocaleDateString('ko-KR'),
-        risk: '보통',
-        dangerCount: 3,
-        goodCount: 7,
-        warningCount: 2,
-        content: textInput.substring(0, 100) + '...' // 내용 일부 저장
-    };
+    // 간단한 분석 로직 (실제로는 AI API를 사용)
+    const analysisResult = generateAnalysisResult(textInput);
     
     document.getElementById('resultContent').innerHTML = `
         <div class="analysis-result">
             <div class="result-header">
-                <h4>🔍 AI를 이용한 '${analysisResult.name}' 약관의 분석 결과</h4>
-                ${isLoggedIn ? `<button class="save-result-btn" onclick="saveAnalysisResult('${analysisResult.id}')">💾 저장하기</button>` : ''}
+                <h4> AI를 이용한 '${analysisResult.name}' 약관의 분석 결과</h4>
+                ${isLoggedIn ? `<button class="save-result-btn" onclick="saveAnalysisResult()">💾 저장하기</button>` : ''}
             </div>
             <p>이 약관은 <strong>${analysisResult.risk}</strong> 수준의 위험도를 가지고 있습니다.</p>
             
@@ -556,24 +545,179 @@ function analyzeTerms() {
                 <div class="risk-item warning">유의해야할 문장: ${analysisResult.warningCount}개</div>
             </div>
             
-            <h4>📊 AI를 이용한 분석 결과와 요약</h4>
+            <h4> AI를 이용한 분석 결과와 요약</h4>
             <ul>
-                <li>개인정보 수집 범위가 명확하게 명시되어 있음</li>
-                <li>데이터 보관 기간에 대한 설명이 부족함</li>
-                <li>제3자 제공 조건을 주의 깊게 확인하세요</li>
-                <li>사용자의 권리 행사 방법이 구체적으로 안내되어 있음</li>
-                <li>약관 변경 시 사전 통지 절차가 명시되어 있음</li>
+                ${analysisResult.analysisPoints.map(point => `<li>${point}</li>`).join('')}
             </ul>
+            
+            ${!isLoggedIn ? `
+                <div class="save-notice">
+                    <div class="save-notice-content">
+                        <h4>💡 분석 결과를 저장하고 싶으신가요?</h4>
+                        <p>로그인하시면 분석한 약관들을 저장하고 관리할 수 있습니다.<br>
+                        로그인 후 왼쪽 사이드바에서 분석 기록을 확인할 수 있습니다.</p>
+                        <button class="save-notice-btn" onclick="showLogin()">로그인하여 저장하기</button>
+                    </div>
+                </div>
+            ` : ''}
         </div>
     `;
     
-    // 임시로 현재 분석 결과 저장 (저장 버튼을 위해)
+    // 현재 분석 결과를 임시 저장 (저장 버튼용)
     window.currentAnalysisResult = analysisResult;
     
+    // 결과 섹션으로 부드럽게 스크롤
     document.getElementById('resultSection').scrollIntoView({ 
         behavior: 'smooth',
         block: 'start'
     });
+}
+
+// 분석 결과 생성 함수 (실제 AI 대신 규칙 기반)
+function generateAnalysisResult(text) {
+    const serviceName = getTermsName(text);
+    
+    // 텍스트 길이와 키워드 기반으로 위험도 계산
+    const riskScore = calculateRiskScore(text);
+    const riskLevel = getRiskLevel(riskScore);
+    
+    const analysisResult = {
+        id: Date.now(),
+        name: serviceName,
+        date: new Date().toLocaleDateString('ko-KR'),
+        risk: riskLevel.level,
+        dangerCount: riskLevel.danger,
+        goodCount: riskLevel.good,
+        warningCount: riskLevel.warning,
+        content: text.substring(0, 200) + '...', // 내용 일부 저장
+        analysisPoints: generateAnalysisPoints(text, riskLevel)
+    };
+    
+    return analysisResult;
+}
+
+// 위험도 점수 계산 (키워드 기반)
+function calculateRiskScore(text) {
+    const lowerText = text.toLowerCase();
+    let score = 50; // 기본 점수
+    
+    // 위험 키워드들 (점수 증가)
+    const dangerKeywords = [
+        '무제한', '영구', '전면적', '모든 권리', '책임 없음', '면책', '임의', 
+        '제3자 제공', '마케팅 활용', '광고 목적', '수집', '저장', '전송'
+    ];
+    
+    // 안전 키워드들 (점수 감소)
+    const safeKeywords = [
+        '동의', '선택권', '철회', '삭제', '보호', '암호화', '안전', '투명',
+        '명시', '알림', '사전 동의', '최소 수집', '이용자 권리'
+    ];
+    
+    dangerKeywords.forEach(keyword => {
+        const matches = (lowerText.match(new RegExp(keyword, 'g')) || []).length;
+        score += matches * 5;
+    });
+    
+    safeKeywords.forEach(keyword => {
+        const matches = (lowerText.match(new RegExp(keyword, 'g')) || []).length;
+        score -= matches * 3;
+    });
+    
+    return Math.max(0, Math.min(100, score));
+}
+
+// 위험도 레벨 결정
+function getRiskLevel(score) {
+    if (score >= 70) {
+        return {
+            level: '높음',
+            danger: Math.floor(Math.random() * 8) + 5, // 5-12개
+            warning: Math.floor(Math.random() * 5) + 3, // 3-7개
+            good: Math.floor(Math.random() * 5) + 2 // 2-6개
+        };
+    } else if (score >= 40) {
+        return {
+            level: '보통',
+            danger: Math.floor(Math.random() * 4) + 2, // 2-5개
+            warning: Math.floor(Math.random() * 4) + 3, // 3-6개
+            good: Math.floor(Math.random() * 6) + 5 // 5-10개
+        };
+    } else {
+        return {
+            level: '낮음',
+            danger: Math.floor(Math.random() * 2) + 0, // 0-1개
+            warning: Math.floor(Math.random() * 3) + 1, // 1-3개
+            good: Math.floor(Math.random() * 8) + 8 // 8-15개
+        };
+    }
+}
+
+// 분석 포인트 생성
+function generateAnalysisPoints(text, riskLevel) {
+    const basePoints = [
+        '개인정보 수집 범위가 명확하게 명시되어 있음',
+        '서비스 이용 목적이 구체적으로 기술되어 있음',
+        '사용자의 권리 행사 방법이 안내되어 있음',
+        '약관 변경 시 사전 통지 절차가 명시되어 있음'
+    ];
+    
+    const riskPoints = {
+        '높음': [
+            '개인정보 제3자 제공 범위가 광범위함',
+            '데이터 보관 기간이 명확하지 않음',
+            '서비스 중단 시 데이터 처리 방법 확인 필요',
+            '광고 및 마케팅 활용 동의 조항 주의',
+            '면책 조항이 과도하게 포괄적임'
+        ],
+        '보통': [
+            '일부 개인정보 이용 목적이 모호함',
+            '제3자 서비스 연동 시 추가 약관 적용',
+            '데이터 처리 위탁 업체 정보 확인 권장',
+            '쿠키 및 추적 기술 사용에 대한 동의 필요'
+        ],
+        '낮음': [
+            '개인정보 최소 수집 원칙을 잘 준수함',
+            '데이터 암호화 및 보안 조치가 명확함',
+            '사용자 동의 철회 절차가 간단함',
+            '투명한 데이터 처리 정책을 제시함'
+        ]
+    };
+    
+    const selectedRiskPoints = riskPoints[riskLevel.level] || riskPoints['보통'];
+    const shuffledRiskPoints = selectedRiskPoints.sort(() => 0.5 - Math.random());
+    
+    return [
+        ...basePoints.slice(0, 2),
+        ...shuffledRiskPoints.slice(0, 3)
+    ];
+}
+
+// 기존 getTermsName 함수 개선
+function getTermsName(text) {
+    const lowerText = text.toLowerCase();
+    
+    // 서비스별 키워드 매칭
+    const serviceKeywords = {
+        'Instagram': ['instagram', 'insta', '인스타그램', '인스타'],
+        'Google': ['google', '구글', 'gmail', '지메일'],
+        'Apple': ['apple', '애플', 'iphone', '아이폰'],
+        'KakaoTalk': ['kakao', '카카오톡', '카카오', 'kakaotalk'],
+        'Naver': ['naver', '네이버'],
+        'YouTube': ['youtube', '유튜브'],
+        'Discord': ['discord', '디스코드'],
+        'Spotify': ['spotify', '스포티파이'],
+        'Facebook': ['facebook', '페이스북', 'meta', '메타'],
+        'TikTok': ['tiktok', '틱톡'],
+        'Netflix': ['netflix', '넷플릭스']
+    };
+    
+    for (const [service, keywords] of Object.entries(serviceKeywords)) {
+        if (keywords.some(keyword => lowerText.includes(keyword))) {
+            return service;
+        }
+    }
+    
+    return '업로드한';
 }
 
 // 분석 결과 저장 함수
@@ -605,27 +749,17 @@ function saveAnalysisResult(resultId) {
     // 사이드바 업데이트
     updateSidebarAnalysisList();
     
-    alert('분석 결과가 저장되었습니다! 📁');
+    alert('분석 결과가 저장되었습니다!');
     
     // 저장 버튼 비활성화
     const saveBtn = document.querySelector('.save-result-btn');
     if (saveBtn) {
-        saveBtn.innerHTML = '✅ 저장됨';
+        saveBtn.innerHTML = '저장됨';
         saveBtn.disabled = true;
         saveBtn.style.background = '#28a745';
     }
 }
-function getTermsName(text) { //example case
-    if (text.toLowerCase().includes('instagram')) return 'Instagram';
-    if (text.toLowerCase().includes('google')) return 'Google';
-    if (text.toLowerCase().includes('apple')) return 'Apple';
-    if (text.toLowerCase().includes('kakao')) return '카카오';
-    if (text.toLowerCase().includes('naver')) return '네이버';
-    if (text.toLowerCase().includes('youtube')) return 'YouTube';
-    if (text.toLowerCase().includes('discord')) return 'Discord';
-    if (text.toLowerCase().includes('spotify')) return 'Spotify';
-    return '업로드한';
-}
+
 
 // 초기화 함수들
 function initializeTextarea() {
