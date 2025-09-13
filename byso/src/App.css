@@ -6,10 +6,11 @@
 
 body {
     font-family: 'Noto Sans KR', sans-serif;
-    background: #B2AC88; /* 변경된 배경색 */
+    background: #B2AC88;
     min-height: 100vh;
     color: #333;
     display: flex;
+    overflow-x: hidden; /* 가로 스크롤 방지 */
 }
 
 /* 사이드바 */
@@ -171,6 +172,9 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    width: 100%;
+    max-width: 100vw; /* 뷰포트 너비 초과 방지 */
+    overflow-x: hidden; /* 가로 스크롤 방지 */
 }
 
 .main-content.sidebar-open {
@@ -181,8 +185,9 @@ body {
 .header {
     display: flex;
     justify-content: flex-end;
-    padding: 20px 30px;
+    padding: 20px;
     gap: 15px;
+    flex-wrap: wrap;
 }
 
 .header button {
@@ -219,8 +224,9 @@ body {
     flex: 1;
     max-width: 1000px;
     margin: 0 auto;
-    padding: 0 30px;
+    padding: 0 20px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .title {
@@ -251,6 +257,8 @@ body {
     padding: 35px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     margin-bottom: 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .input-title {
@@ -279,6 +287,7 @@ body {
     resize: vertical;
     outline: none;
     transition: border-color 0.3s ease;
+    box-sizing: border-box;
 }
 
 .text-input:focus {
@@ -299,6 +308,7 @@ body {
     cursor: pointer;
     margin-top: 25px;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 .analyze-button:hover {
@@ -314,6 +324,8 @@ body {
     margin-bottom: 30px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     display: none;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .result-title {
@@ -331,6 +343,8 @@ body {
     margin-bottom: 40px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     display: none;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tab-nav {
@@ -376,6 +390,8 @@ body {
     background: #f8f9fa;
     border-radius: 15px;
     padding: 30px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .analysis-result h4 {
@@ -396,6 +412,7 @@ body {
     border-radius: 20px;
     font-size: 14px;
     font-weight: 500;
+    flex-shrink: 0;
 }
 
 .risk-item.danger {
@@ -427,6 +444,8 @@ body {
 /* 로그인 안내 섹션 */
 .login-notice-section {
     margin-bottom: 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .login-notice {
@@ -436,6 +455,8 @@ body {
     text-align: center;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .login-notice h3 {
@@ -484,6 +505,8 @@ body {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .modal-overlay.show {
@@ -494,12 +517,13 @@ body {
 .modal-content {
     background: white;
     border-radius: 20px;
-    width: 90%;
+    width: 100%;
     max-width: 450px;
     max-height: 90vh;
     overflow-y: auto;
     transform: translateY(-20px);
     transition: transform 0.3s ease;
+    box-sizing: border-box;
 }
 
 .modal-overlay.show .modal-content {
@@ -762,6 +786,7 @@ body {
     font-size: 15px;
     font-family: 'Noto Sans KR', sans-serif;
     transition: border-color 0.3s ease;
+    box-sizing: border-box;
 }
 
 .input-group input:focus {
@@ -774,6 +799,8 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .remember-me {
@@ -810,6 +837,7 @@ body {
     cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
 .login-btn:hover {
@@ -861,6 +889,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
 }
 
 .naver-btn {
@@ -897,22 +926,44 @@ body {
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+    }
+    
     .container {
-        padding: 0 20px;
+        padding: 0 15px;
     }
     
     .title {
-        font-size: 36px;
+        font-size: clamp(32px, 8vw, 48px);
+    }
+    
+    .subtitle {
+        font-size: clamp(14px, 3vw, 16px);
     }
     
     .input-section,
     .result-section,
     .tab-container {
-        padding: 25px;
+        padding: clamp(20px, 5vw, 35px);
+        margin-bottom: 30px;
+    }
+    
+    .login-notice {
+        padding: clamp(30px, 8vw, 50px);
+    }
+    
+    .login-notice h3 {
+        font-size: clamp(20px, 5vw, 28px);
+    }
+    
+    .login-notice p {
+        font-size: clamp(16px, 3.5vw, 18px);
     }
     
     .help-modal-content {
         max-width: 95% !important;
+        margin: 10px;
     }
     
     .help-steps {
@@ -940,6 +991,73 @@ body {
     
     .main-content.sidebar-open {
         margin-left: 280px;
+    }
+    
+    .header {
+        padding: 15px;
+    }
+    
+    .header button {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    
+    .modal-overlay {
+        padding: 10px;
+    }
+    
+    .modal-header {
+        padding: 20px 25px 15px;
+    }
+    
+    .modal-body {
+        padding: 25px;
+    }
+    
+    .login-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 250px;
+    }
+    
+    .sidebar-toggle.active {
+        left: 270px;
+    }
+    
+    .main-content.sidebar-open {
+        margin-left: 250px;
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+    }
+    
+    .sidebar-content {
+        padding: 15px;
+    }
+    
+    .modal-header {
+        padding: 15px 20px 10px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .help-step {
+        gap: 10px;
+    }
+    
+    .step-number {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
     }
 }
 
@@ -978,6 +1096,7 @@ body {
     transform: none;
     box-shadow: none;
 }
+
 /* 다크모드 스타일 - 검정 베이스 */
 .dark-mode-loading,
 body.dark-mode {
@@ -1273,6 +1392,7 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
     background: #444444;
 }
+
 /* 회원가입 모달 추가 스타일 */
 .signup-form {
     display: flex;
@@ -1354,6 +1474,7 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
     font-family: 'Noto Sans KR', sans-serif;
     transition: all 0.3s ease;
     margin-top: 10px;
+    box-sizing: border-box;
 }
 
 .signup-btn:hover:not(:disabled) {
@@ -1421,6 +1542,7 @@ body.dark-mode .login-link {
 body.dark-mode .login-link p {
     color: #cccccc !important;
 }
+
 /* 저장 안내 섹션 */
 .save-notice {
     margin-top: 30px;
@@ -1459,41 +1581,6 @@ body.dark-mode .login-link p {
     background: linear-gradient(135deg, #218838, #1e7e34);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
-}
-
-/* 결과 헤더 */
-.result-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.save-result-btn {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-}
-
-.save-result-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
-}
-
-.save-result-btn:disabled {
-    background: #28a745;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
 }
 
 /* 다크모드 대응 */

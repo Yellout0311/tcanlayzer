@@ -34,7 +34,6 @@
             100% { transform: rotate(360deg); }
         }
     </style>
-    <script src="darkmode.js"></script>
 </head>
 <body>
     <div class="container">
@@ -69,7 +68,7 @@
             updateStatus('❌ 로그인 취소 또는 에러');
             alert('로그인이 취소되었습니다.');
             setTimeout(function() {
-                window.location.href = 'index.html';
+                window.location.href = '/'; // 리액트 루트로 변경
             }, 2000);
         }
         // 성공 처리
@@ -87,13 +86,13 @@
                 loginTime: new Date().toISOString()
             };
             
-            updateStatus('💾 사용자 정보 저장 중...');
+            updateStatus(' 사용자 정보 저장 중...');
             localStorage.setItem('naver_login_success', JSON.stringify(userInfo));
             
-            updateStatus('🔄 메인 페이지로 이동...');
+            updateStatus(' 메인 페이지로 이동...');
             
             setTimeout(function() {
-                window.location.href = 'index.html';
+                window.location.href = '/App.js'; 
             }, 2000);
         }
         // 예외 상황
@@ -101,7 +100,7 @@
             updateStatus('❓ 알 수 없는 상태');
             alert('로그인 처리 중 오류가 발생했습니다.');
             setTimeout(function() {
-                window.location.href = 'index.html';
+                window.location.href = '/App.js'; 
             }, 2000);
         }
     </script>
