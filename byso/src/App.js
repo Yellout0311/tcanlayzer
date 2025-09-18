@@ -537,6 +537,11 @@ function App() {
                     border: `1px solid ${colors.border}`,
                     boxShadow: "0 4px 15px rgba(0, 0, 0, 0.05)",
                     marginBottom: "15px"
+                  }}
+                  onClick={() => {
+                    setAnalysisResult(analysis.result);
+                    setActiveTab('분석결과');
+                    setCurrentPage('result');
                   }}>
                     <div style={{display: 'flex', alignItems: 'center', marginBottom: '15px'}}>
                       <div style={{
