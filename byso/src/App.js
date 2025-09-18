@@ -12,25 +12,22 @@ function App() {
   const [termsText, setTermsText] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
   const [currentPage, setCurrentPage] = useState('main');
+  const [savedAnalyses, setSavedAnalyses] = useState([]); // 저장된 분석 결과들
+  const [activeTab, setActiveTab] = useState('분석결과'); // 현재 활성 탭
   
   const { isDarkMode, toggleDarkMode, colors } = useDarkMode();
 
   useEffect(() => {
-  // 네이버 로그인 성공 확인
-  const naverLoginData = localStorage.getItem('naver_login_success');
-  if (naverLoginData) {
-    const userInfo = JSON.parse(naverLoginData);
-    console.log('네이버 로그인 성공:', userInfo);
-    
-    // 로그인 상태 변경
-    setIsLoggedIn(true);
-    
-    // 성공 메시지
-    alert(`${userInfo.name}님, 환영합니다!`);
-    
-    // 사용된 데이터 삭제
-    localStorage.removeItem('naver_login_success');
-  }
+    // 네이버 로그인 성공 확인
+    const naverLoginData = localStorage.getItem('naver_login_success');
+    if (naverLoginData) {
+      const userInfo = JSON.parse(naverLoginData);
+      console.log('네이버 로그인 성공:', userInfo);
+      
+      setIsLoggedIn(true);
+      alert(`${userInfo.name}님, 환영합니다!`);
+      localStorage.removeItem('naver_login_success');
+    }
   }, []);
 
   const toggleSidebar = () => {
@@ -59,6 +56,14 @@ function App() {
     setShowLoginModal(true);
   };
 
+  // 분석 삭제 함수
+  const deleteAnalysis = (index) => {
+    if (window.confirm('이 분석 결과를 삭제하시겠습니까?')) {
+      const newAnalyses = savedAnalyses.filter((_, i) => i !== index);
+      setSavedAnalyses(newAnalyses);
+    }
+  };
+
   const analyzeTerms = () => {
     if (!termsText.trim()) {
       alert('분석할 약관을 입력해주세요.');
@@ -75,12 +80,48 @@ function App() {
         "개인정보 수집 및 이용 동의",
         "서비스 이용 제한 조건",
         "데이터 보관 기간 명시"
-      ]
+      ],
+      personalInfo: {
+        summary: "개인정보 관련 조항을 분석한 결과입니다.",
+        details: [
+          "수집하는 개인정보 항목: 이름, 이메일, 전화번호",
+          "개인정보 보관기간: 회원 탈퇴 후 3년",
+          "제3자 제공: 마케팅 목적으로 제휴사에 제공 가능"
+        ]
+      },
+      financialInfo: {
+        summary: "금융정보 관련 조항을 분석한 결과입니다.",
+        details: [
+          "결제 정보 수집 및 보관",
+          "환불 정책 및 절차",
+          "금융거래 기록 보관 의무"
+        ]
+      },
+      fullTerms: termsText
+    };
+
+    setAnalysisResult(mockResult);
+    setActiveTab('분석결과'); // 분석 후 첫 번째 탭으로 설정
+    setCurrentPage('result');
+    
+    // 로그인 상태일 때만 사이드바에 저장
+    if (isLoggedIn) {
+      const newAnalysis = {
+        id: Date.now(),
+        title: `약관 분석 ${new Date().toLocaleDateString()}`,
+        date: new Date().toLocaleDateString(),
+        result: mockResult
+      };
+      setSavedAnalyses(prev => [newAnalysis, ...prev]);
+    }
   };
 
-  setAnalysisResult(mockResult);
-  setCurrentPage('result'); // 결과 페이지로 이동
-};
+  // 메인 페이지로 이동 함수
+  const goToMain = () => {
+    setCurrentPage('main');
+    setTermsText('');
+    setAnalysisResult(null);
+  };
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -91,7 +132,116 @@ function App() {
 
   const logout = () => {
     setIsLoggedIn(false);
+    setSavedAnalyses([]);
     alert('로그아웃되었습니다.');
+  };
+
+  // 탭 내용 렌더링 함수
+  const renderTabContent = () => {
+    if (!analysisResult) return null;
+
+    switch (activeTab) {
+      case '분석결과':
+        return (
+          <div>
+            <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)'}}>AI 요약</h4>
+            <p style={{lineHeight: '1.7', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary, marginBottom: '30px'}}>{analysisResult.summary}</p>
+            
+            <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)'}}>위험도 평가</h4>
+            <div style={{
+              display: "flex",
+              gap: "15px",
+              margin: "25px 0",
+              flexWrap: "wrap"
+            }}>
+              {analysisResult.risks.map((risk, index) => (
+                <div 
+                  key={index} 
+                  style={{
+                    padding: "12px 20px",
+                    borderRadius: "25px",
+                    fontSize: "clamp(13px, 2vw, 15px)",
+                    fontWeight: "600",
+                    ...(risk.level === 'warning' ? 
+                      {
+                        background: isDarkMode ? "rgba(255, 193, 7, 0.2)" : "rgba(255, 243, 205, 0.8)", 
+                        color: isDarkMode ? "#ffc107" : "#856404"
+                      } : 
+                      {
+                        background: isDarkMode ? "rgba(76, 175, 80, 0.2)" : "rgba(212, 237, 218, 0.8)", 
+                        color: isDarkMode ? "#4caf50" : "#155724"
+                      })
+                  }}
+                >
+                  {risk.text}
+                </div>
+              ))}
+            </div>
+
+            <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)', marginTop: '30px'}}>주요 포인트</h4>
+            <ul style={{paddingLeft: '25px'}}>
+              {analysisResult.keyPoints.map((point, index) => (
+                <li key={index} style={{marginBottom: '12px', lineHeight: '1.6', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary}}>{point}</li>
+              ))}
+            </ul>
+          </div>
+        );
+
+      case '개인정보':
+        return (
+          <div>
+            <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)'}}>개인정보 처리방침 분석</h4>
+            <p style={{lineHeight: '1.7', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary, marginBottom: '30px'}}>{analysisResult.personalInfo.summary}</p>
+            <ul style={{paddingLeft: '25px'}}>
+              {analysisResult.personalInfo.details.map((detail, index) => (
+                <li key={index} style={{marginBottom: '12px', lineHeight: '1.6', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary}}>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        );
+
+      case '금융정보':
+        return (
+          <div>
+            <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)'}}>금융정보 관련 조항 분석</h4>
+            <p style={{lineHeight: '1.7', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary, marginBottom: '30px'}}>{analysisResult.financialInfo.summary}</p>
+            <ul style={{paddingLeft: '25px'}}>
+              {analysisResult.financialInfo.details.map((detail, index) => (
+                <li key={index} style={{marginBottom: '12px', lineHeight: '1.6', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary}}>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        );
+
+      case '전체 약관':
+        return (
+          <div>
+            <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)'}}>전체 약관 내용</h4>
+            <div style={{
+              background: isDarkMode ? '#1a1a1a' : '#f5f5f5',
+              padding: '20px',
+              borderRadius: '10px',
+              maxHeight: '400px',
+              overflowY: 'auto',
+              border: `1px solid ${colors.border}`
+            }}>
+              <pre style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontSize: 'clamp(12px, 2vw, 14px)',
+                color: colors.textSecondary,
+                margin: 0,
+                fontFamily: 'inherit'
+              }}>
+                {analysisResult.fullTerms}
+              </pre>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   // Settings 페이지로 전환
@@ -107,7 +257,8 @@ function App() {
       />
     );
   }
-// 분석 결과 페이지
+
+  // 분석 결과 페이지
   if (currentPage === 'result') {
     return (
       <div style={{
@@ -139,7 +290,7 @@ function App() {
                 cursor: "pointer",
                 letterSpacing: "4px"
               }}
-              onClick={() => setCurrentPage('main')}
+              onClick={goToMain}
             >
               BYSO
             </h1>
@@ -185,6 +336,40 @@ function App() {
             </div>
           </div>
 
+          {/* 탭 버튼들 */}
+          <div style={{
+            display: "flex",
+            gap: "10px",
+            marginBottom: "30px",
+            flexWrap: "wrap",
+            justifyContent: "center"
+          }}>
+            {['분석결과', '개인정보', '금융정보', '전체 약관'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: "12px 24px",
+                  borderRadius: "25px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  border: `2px solid ${colors.border}`,
+                  ...(activeTab === tab ? {
+                    background: colors.buttonBg,
+                    color: colors.textPrimary
+                  } : {
+                    background: "transparent",
+                    color: colors.textSecondary
+                  })
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
           {/* 분석 결과 */}
           {analysisResult && (
             <div style={{
@@ -211,46 +396,7 @@ function App() {
                 padding: "clamp(20px, 4vw, 35px)",
                 border: `1px solid ${colors.border}`
               }}>
-                <h3 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(20px, 3vw, 24px)'}}>AI 요약</h3>
-                <p style={{lineHeight: '1.7', fontSize: 'clamp(16px, 2.5vw, 18px)', color: colors.textSecondary, marginBottom: '30px'}}>{analysisResult.summary}</p>
-                
-                <h3 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(20px, 3vw, 24px)'}}>위험도 평가</h3>
-                <div style={{
-                  display: "flex",
-                  gap: "15px",
-                  margin: "25px 0",
-                  flexWrap: "wrap"
-                }}>
-                  {analysisResult.risks.map((risk, index) => (
-                    <div 
-                      key={index} 
-                      style={{
-                        padding: "12px 20px",
-                        borderRadius: "25px",
-                        fontSize: "clamp(14px, 2vw, 16px)",
-                        fontWeight: "600",
-                        ...(risk.level === 'warning' ? 
-                          {
-                            background: isDarkMode ? "rgba(255, 193, 7, 0.2)" : "rgba(255, 243, 205, 0.8)", 
-                            color: isDarkMode ? "#ffc107" : "#856404"
-                          } : 
-                          {
-                            background: isDarkMode ? "rgba(76, 175, 80, 0.2)" : "rgba(212, 237, 218, 0.8)", 
-                            color: isDarkMode ? "#4caf50" : "#155724"
-                          })
-                      }}
-                    >
-                      {risk.text}
-                    </div>
-                  ))}
-                </div>
-
-                <h3 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(20px, 3vw, 24px)', marginTop: '30px'}}>주요 포인트</h3>
-                <ul style={{paddingLeft: '25px'}}>
-                  {analysisResult.keyPoints.map((point, index) => (
-                    <li key={index} style={{marginBottom: '15px', lineHeight: '1.6', fontSize: 'clamp(16px, 2.5vw, 18px)', color: colors.textSecondary}}>{point}</li>
-                  ))}
-                </ul>
+                {renderTabContent()}
               </div>
 
               {/* 액션 버튼들 */}
@@ -273,7 +419,7 @@ function App() {
                     cursor: "pointer",
                     transition: "all 0.3s ease"
                   }}
-                  onClick={() => setCurrentPage('main')}
+                  onClick={goToMain}
                 >
                   새로운 분석하기
                 </button>
@@ -304,6 +450,7 @@ function App() {
       </div>
     );
   }
+
   return (
     <div style={{
       fontFamily: "'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif",
@@ -379,44 +526,71 @@ function App() {
         }}>
           <div className="analysis-list">
             {isLoggedIn ? (
-              <div style={{
-                background: colors.cardBackground,
-                borderRadius: "16px",
-                padding: "20px",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                border: `1px solid ${colors.border}`,
-                boxShadow: "0 4px 15px rgba(0, 0, 0, 0.05)"
-              }}>
-                <div style={{display: 'flex', alignItems: 'center', marginBottom: '15px'}}>
-                  <div style={{
-                    width: '50px', 
-                    height: '50px', 
-                    borderRadius: '12px', 
-                    background: colors.buttonBg, 
-                    color: colors.textPrimary, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    fontWeight: 'bold', 
-                    fontSize: '16px', 
-                    marginRight: '15px'
-                  }}>BY</div>
-                  <div>
-                    <h4 style={{margin: 0, fontSize: '18px', fontWeight: '600', color: colors.textPrimary}}>샘플 약관 분석</h4>
-                    <div style={{fontSize: '14px', color: colors.textSecondary, marginTop: '4px'}}>2024-01-01</div>
+              savedAnalyses.length > 0 ? (
+                savedAnalyses.map((analysis, index) => (
+                  <div key={analysis.id} style={{
+                    background: colors.cardBackground,
+                    borderRadius: "16px",
+                    padding: "20px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.05)",
+                    marginBottom: "15px"
+                  }}>
+                    <div style={{display: 'flex', alignItems: 'center', marginBottom: '15px'}}>
+                      <div style={{
+                        width: '50px', 
+                        height: '50px', 
+                        borderRadius: '12px', 
+                        background: colors.buttonBg, 
+                        color: colors.textPrimary, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        fontWeight: 'bold', 
+                        fontSize: '16px', 
+                        marginRight: '15px'
+                      }}>BY</div>
+                      <div style={{flex: 1}}>
+                        <h4 style={{margin: 0, fontSize: '18px', fontWeight: '600', color: colors.textPrimary}}>{analysis.title}</h4>
+                        <div style={{fontSize: '14px', color: colors.textSecondary, marginTop: '4px'}}>{analysis.date}</div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteAnalysis(index);
+                        }}
+                        style={{
+                          background: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                    <div style={{
+                      display: 'inline-block', 
+                      padding: '6px 12px', 
+                      borderRadius: '15px', 
+                      fontSize: '12px', 
+                      fontWeight: '600', 
+                      background: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(200, 230, 201, 0.3)', 
+                      color: isDarkMode ? '#4caf50' : '#2e7d32'
+                    }}>안전</div>
                   </div>
+                ))
+              ) : (
+                <div style={{textAlign: 'center', padding: '30px', color: colors.textSecondary, fontSize: '16px'}}>
+                  아직 분석한 약관이 없습니다.
                 </div>
-                <div style={{
-                  display: 'inline-block', 
-                  padding: '6px 12px', 
-                  borderRadius: '15px', 
-                  fontSize: '12px', 
-                  fontWeight: '600', 
-                  background: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(200, 230, 201, 0.3)', 
-                  color: isDarkMode ? '#4caf50' : '#2e7d32'
-                }}>안전</div>
-              </div>
+              )
             ) : (
               <div style={{textAlign: 'center', padding: '30px', color: colors.textSecondary, fontSize: '16px'}}>
                 로그인 후 분석 기록을 확인할 수 있습니다.
@@ -510,7 +684,7 @@ function App() {
             letterSpacing: "clamp(4px, 1vw, 8px)",
             cursor: "pointer"
           }}
-          onClick={() => setCurrentPage('main')}
+          onClick={goToMain}
           >BYSO</h1>
           <p style={{
             textAlign: "center",
@@ -605,75 +779,6 @@ function App() {
             </button>
           </div>
 
-          {/* 분석 결과 영역 */}
-          {analysisResult && (
-            <div style={{
-              background: colors.cardBackground,
-              borderRadius: "24px",
-              padding: "clamp(20px, 4vw, 40px)",
-              marginBottom: "40px",
-              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.08)",
-              backdropFilter: "blur(20px)",
-              border: `1px solid ${colors.border}`,
-              width: "100%",
-              boxSizing: "border-box"
-            }}>
-              <h3 style={{
-                fontSize: "clamp(24px, 4vw, 28px)",
-                fontWeight: "700",
-                marginBottom: "25px",
-                color: colors.textPrimary
-              }}>분석 결과</h3>
-              <div style={{
-                background: isDarkMode ? '#2a2a2a' : '#f8fafc',
-                borderRadius: "20px",
-                padding: "clamp(20px, 4vw, 35px)",
-                border: `1px solid ${colors.border}`
-              }}>
-                <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)'}}>AI 요약</h4>
-                <p style={{lineHeight: '1.7', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary}}>{analysisResult.summary}</p>
-                
-                <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)', marginTop: '30px'}}>위험도 평가</h4>
-                <div style={{
-                  display: "flex",
-                  gap: "15px",
-                  margin: "25px 0",
-                  flexWrap: "wrap"
-                }}>
-                  {analysisResult.risks.map((risk, index) => (
-                    <div 
-                      key={index} 
-                      style={{
-                        padding: "12px 20px",
-                        borderRadius: "25px",
-                        fontSize: "clamp(13px, 2vw, 15px)",
-                        fontWeight: "600",
-                        ...(risk.level === 'warning' ? 
-                          {
-                            background: isDarkMode ? "rgba(255, 193, 7, 0.2)" : "rgba(255, 243, 205, 0.8)", 
-                            color: isDarkMode ? "#ffc107" : "#856404"
-                          } : 
-                          {
-                            background: isDarkMode ? "rgba(76, 175, 80, 0.2)" : "rgba(212, 237, 218, 0.8)", 
-                            color: isDarkMode ? "#4caf50" : "#155724"
-                          })
-                      }}
-                    >
-                      {risk.text}
-                    </div>
-                  ))}
-                </div>
-
-                <h4 style={{color: colors.textPrimary, marginBottom: '20px', fontSize: 'clamp(18px, 3vw, 20px)', marginTop: '30px'}}>주요 포인트</h4>
-                <ul style={{paddingLeft: '25px'}}>
-                  {analysisResult.keyPoints.map((point, index) => (
-                    <li key={index} style={{marginBottom: '12px', lineHeight: '1.6', fontSize: 'clamp(14px, 2.5vw, 16px)', color: colors.textSecondary}}>{point}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
           {/* 로그인 안내 섹션 */}
           {!isLoggedIn && (
             <div style={{
@@ -723,8 +828,7 @@ function App() {
           )}
         </div>
       </div>
-
-      {/* 로그인 모달 */}
+{/* 로그인 모달 */}
       {showLoginModal && (
         <div style={{
           position: "fixed",
