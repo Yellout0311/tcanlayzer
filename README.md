@@ -22,4 +22,5 @@
 - 프론트엔드 웝페이지 개발 전담(React)
 - 카카오 소셜 로그인 OAuth 2.0 연동
 - Vercel 배포 및 환경 설정
+- AI : Gemini 2.5pro 사용  
 
