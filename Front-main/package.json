@@ -1,0 +1,12 @@
+{
+  "name": "byso-project",
+  "scripts": {
+    "web": "cd byso && npm start",
+    "app": "cd byso_app && npx expo start",
+    "app:android": "cd byso_app && npx expo start --android",
+    "app:ios": "cd byso_app && npx expo start --ios",
+    "install:web": "cd byso && npm install",
+    "install:app": "cd byso_app && npm install",
+    "install:all": "npm run install:web && npm run install:app"
+  }
+}
